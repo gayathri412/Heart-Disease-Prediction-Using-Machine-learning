@@ -1,0 +1,86 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+df = pd.read_csv('Heart_Disease_Prediction.csv')
+
+df.columns = [
+    'age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg',
+    'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target'
+]
+
+df['target'] = df['target'].map({'Presence': 1, 'Absence': 0})
+
+X = df.drop('target', axis=1)
+y = df['target']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+print(f"Training samples: {X_train.shape[0]}")
+print(f"Test samples: {X_test.shape[0]}")
+print(f"Target distribution in train: {np.bincount(y_train)}")
+print(f"Target distribution in test: {np.bincount(y_test)}\n")
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+print(f"\nTraining set size: {X_train.shape}")
+print(f"Test set size: {X_test.shape}")
+
+print("="*50)
+print("RANDOM FOREST MODEL")
+print("="*50)
+
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+y_pred_rf = rf_model.predict(X_test)
+rf_acc = accuracy_score(y_test, y_pred_rf)
+
+print(f"Random Forest Accuracy: {rf_acc:.4f}")
+print("\nClassification Report (Random Forest):")
+print(classification_report(y_test, y_pred_rf))
+
+print("\nConfusion Matrix (Random Forest):")
+print(confusion_matrix(y_test, y_pred_rf))
+
+print("\n" + "="*50)
+print("XGBOOST MODEL")
+print("="*50)
+
+xgb_model = XGBClassifier(
+    random_state=42,
+    use_label_encoder=False,
+    eval_metric='logloss'
+)
+xgb_model.fit(X_train, y_train)
+
+y_pred_xgb = xgb_model.predict(X_test)
+xgb_acc = accuracy_score(y_test, y_pred_xgb)
+
+print(f"XGBoost Accuracy: {xgb_acc:.4f}")
+print("\nClassification Report (XGBoost):")
+print(classification_report(y_test, y_pred_xgb))
+
+print("\nConfusion Matrix (XGBoost):")
+print(confusion_matrix(y_test, y_pred_xgb))
+
+print("\n" + "="*50)
+print("MODEL COMPARISON")
+print("="*50)
+print(f"Random Forest Accuracy: {rf_acc:.4f}")
+print(f"XGBoost Accuracy:       {xgb_acc:.4f}")
+
+# Optional: Feature importance (Random Forest)
+print("\nRandom Forest Feature Importances:")
+importance_df = pd.DataFrame({
+    'Feature': X.columns,
+    'Importance': rf_model.feature_importances_
+}).sort_values('Importance', ascending=False)
+print(importance_df)
